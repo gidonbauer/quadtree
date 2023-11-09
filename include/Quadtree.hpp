@@ -2,42 +2,14 @@
 #define QT_QUADTREE_HPP_
 
 #include <cassert>
-#include <cmath>
 #include <concepts>
 #include <iostream>
-#include <limits>
 #include <type_traits>
 #include <variant>
 #include <vector>
 
+#include "Geometry.hpp"
 #include "Macros.hpp"
-
-template <std::floating_point Float = double>
-struct Point {
-  Float x;
-  Float y;
-
-  constexpr auto operator==(const Point& other) const noexcept -> bool {
-#ifdef QT_POINT_CLOSE_EQ
-    const Float eps = std::sqrt(std::numeric_limits<Float>::epsilon());
-    return std::abs(x - other.x) <= eps && std::abs(y - other.y) <= eps;
-#else
-    return x == other.x && y == other.y;
-#endif  // QT_POINT_CLOSE_EQ
-  }
-};
-
-template <std::floating_point Float = double>
-struct Box {
-  Float x;
-  Float y;
-  Float w;
-  Float h;
-
-  [[nodiscard]] constexpr auto contains_point(const Point<Float>& p) const noexcept -> bool {
-    return p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h;
-  }
-};
 
 template <std::floating_point Float>
 class QuadtreeNode {
@@ -139,7 +111,7 @@ class QuadtreeNode {
     }
   }
 
-  constexpr auto find(const Point<Float>& pos) -> std::vector<size_t> {
+  constexpr auto find(const Point<Float>& pos) const noexcept -> std::vector<size_t> {
     assert(m_extend.contains_point(pos));
 
     if (m_is_leaf) {
@@ -152,6 +124,23 @@ class QuadtreeNode {
       assert(grid_pos < NUM_SUBNODES);
 
       return std::get<SUBNODES>(m_content)[grid_pos].find(pos);
+    }
+  }
+
+  constexpr auto find(const Box<Float>& box) const noexcept -> std::vector<size_t> {
+    assert(m_extend.intersects(box));
+
+    if (m_is_leaf) {
+      return std::get<INDICES>(m_content);
+    } else {
+      std::vector<size_t> idxs{};
+      for (const auto& subnode : std::get<SUBNODES>(m_content)) {
+        if (subnode.m_extend.intersects(box)) {
+          const auto tmp_idxs = subnode.find(box);
+          idxs.insert(std::end(idxs), std::begin(tmp_idxs), std::end(tmp_idxs));
+        }
+      }
+      return idxs;
     }
   }
 
@@ -220,6 +209,32 @@ class Quadtree {
     }
     throw std::runtime_error(QT_ERROR_LOC() + ": Position {"s + std::to_string(pos.x) + ", "s +
                              std::to_string(pos.y) + "} is not in quadtree."s);
+  }
+
+  constexpr auto find(const Box<Float>& box) const -> std::vector<Data> {
+    using namespace std::string_literals;
+    if (!m_bounding_box.intersects(box)) {
+      throw std::runtime_error(QT_ERROR_LOC() + ": Search box {["s + std::to_string(box.x) + ", "s +
+                               std::to_string(box.x + box.w) + "], ["s + std::to_string(box.y) +
+                               ", "s + std::to_string(box.y + box.h) +
+                               "]} does not intersect bounding_box {["s +
+                               std::to_string(m_bounding_box.x) + ", "s +
+                               std::to_string(m_bounding_box.x + m_bounding_box.w) + "], ["s +
+                               std::to_string(m_bounding_box.y) + ", "s +
+                               std::to_string(m_bounding_box.y + m_bounding_box.h) + "]}."s);
+    }
+
+    const auto possible_idxs = m_root.find(box);
+
+    std::vector<Data> res{};
+    res.reserve(possible_idxs.size());
+    for (size_t idx : possible_idxs) {
+      if (box.contains_point(m_pos[idx])) {
+        res.push_back(m_data[idx]);
+      }
+    }
+
+    return res;
   }
 
   constexpr void print() const noexcept {
