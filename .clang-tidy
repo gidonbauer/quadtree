@@ -12,7 +12,6 @@ Checks:
   -cppcoreguidelines-init-variables,
   -openmp-use-default-none,
   -readability-identifier-length,
-  -readability-uppercase-literal-suffix,
   -readability-magic-numbers,
   -readability-else-after-return,
   -readability-function-cognitive-complexity,
