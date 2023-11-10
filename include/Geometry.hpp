@@ -4,6 +4,8 @@
 #include <concepts>
 #include <type_traits>
 
+namespace qtree {
+
 template <std::floating_point Float = double>
 struct Point {
   Float x;
@@ -51,5 +53,7 @@ struct Box {
     return (dx * dx + dy * dy) <= c.r * c.r;
   }
 };
+
+}  // namespace qtree
 
 #endif  // QT_GEOMETRY_HPP_

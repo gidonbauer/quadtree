@@ -11,6 +11,9 @@
 #include "Geometry.hpp"
 #include "Macros.hpp"
 
+namespace qtree {
+
+namespace detail {
 template <std::floating_point Float, size_t MAX_ENTRIES = 10UL>
 class QuadtreeNode {
   //     x_split
@@ -161,6 +164,8 @@ class QuadtreeNode {
   }
 };
 
+}  // namespace detail
+
 template <typename Data, std::floating_point Float = double, size_t MAX_ENTRIES = 10UL>
 class Quadtree {
   std::vector<Point<Float>> m_pos{};
@@ -168,12 +173,12 @@ class Quadtree {
 
   Box<Float> m_bounding_box{};
 
-  QuadtreeNode<Float, MAX_ENTRIES> m_root;
+  detail::QuadtreeNode<Float, MAX_ENTRIES> m_root;
 
  public:
   constexpr Quadtree(Box<Float> bounding_box)
       : m_bounding_box(std::move(bounding_box)),
-        m_root(QuadtreeNode<Float, MAX_ENTRIES>(m_bounding_box)) {}
+        m_root(detail::QuadtreeNode<Float, MAX_ENTRIES>(m_bounding_box)) {}
 
   [[nodiscard]] constexpr auto pos() const noexcept -> const std::vector<Point<Float>>& {
     return m_pos;
@@ -254,5 +259,7 @@ class Quadtree {
 
   constexpr void print_root() const noexcept { m_root.print(); }
 };
+
+}  // namespace qtree
 
 #endif  // QT_QUADTREE_HPP_
