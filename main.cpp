@@ -8,7 +8,8 @@ auto main() noexcept -> int {
   using Float = float;
 
   qtree::Box<Float> bb{.x = 0.0, .y = 0.0, .w = 100.0, .h = 150.0};
-  qtree::Quadtree<size_t, Float, 100UL> qt(bb);
+  // qtree::Quadtree<size_t, Float, 100UL> qt(bb);
+  qtree::Quadtree<std::string, Float, 100UL> qt(bb);
 
   std::default_random_engine gen(std::random_device{}());
   std::uniform_real_distribution<Float> dist_x(bb.x, bb.x + bb.w);
@@ -23,7 +24,7 @@ auto main() noexcept -> int {
   {
     const auto t_begin = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < n; ++i) {
-      const auto was_inserted = qt.insert(positions[i], i);
+      const auto was_inserted = qt.insert(positions[i], std::to_string(i));
       assert(was_inserted);
     }
     const auto t_dur =
@@ -37,7 +38,7 @@ auto main() noexcept -> int {
     bool all_correct = true;
     for (size_t i = 0; i < n; ++i) {
       const auto x = qt.find(positions[i]);
-      all_correct  = all_correct && (x == i);
+      all_correct  = all_correct && (x == std::to_string(i));
     }
     std::cout << "Found all = " << std::boolalpha << all_correct << "\n\n\n";
   } catch (const std::exception& e) {
@@ -46,8 +47,37 @@ auto main() noexcept -> int {
 
   try {
     const auto x =
+        qt.find(qtree::Point{.x = static_cast<Float>(-0.15), .y = static_cast<Float>(15000)});
+    std::cout << "x = " << x << '\n';
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << "\n\n\n";
+  }
+
+  try {
+    const auto x =
         qt.find(qtree::Point{.x = static_cast<Float>(0.15), .y = static_cast<Float>(0.15)});
     std::cout << "x = " << x << '\n';
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << "\n\n\n";
+  }
+
+  try {
+    qtree::Box box{.x = static_cast<Float>(-15.0),
+                   .y = static_cast<Float>(-23.4),
+                   .w = static_cast<Float>(1.0),
+                   .h = static_cast<Float>(2.5)};
+    const auto xs = qt.find(box);
+  } catch (const std::exception& e) {
+    std::cerr << e.what() << "\n\n\n";
+  }
+
+  try {
+    qtree::Circle circle{
+        .x = static_cast<Float>(-15.0),
+        .y = static_cast<Float>(-23.4),
+        .r = static_cast<Float>(2.5),
+    };
+    const auto xs = qt.find(circle);
   } catch (const std::exception& e) {
     std::cerr << e.what() << "\n\n\n";
   }

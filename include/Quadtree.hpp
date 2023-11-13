@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <concepts>
+#include <format>
 #include <iostream>
 #include <type_traits>
 #include <variant>
@@ -204,12 +205,15 @@ class Quadtree {
   [[nodiscard]] constexpr auto find(const Point<Float>& pos) -> Data& {
     using namespace std::string_literals;
     if (!m_bounding_box.contains(pos)) {
-      throw std::runtime_error(QT_ERROR_LOC() + ": Position {"s + std::to_string(pos.x) + ", "s +
-                               std::to_string(pos.y) + "} is not in bounding_box {["s +
-                               std::to_string(m_bounding_box.x) + ", "s +
-                               std::to_string(m_bounding_box.x + m_bounding_box.w) + "], ["s +
-                               std::to_string(m_bounding_box.y) + ", "s +
-                               std::to_string(m_bounding_box.y + m_bounding_box.h) + "]}."s);
+      throw std::runtime_error(
+          std::format("{}: Position {{{}, {}}} is not in bounding_box {{[{}, {}], [{}, {}]}}.",
+                      QT_ERROR_LOC(),
+                      pos.x,
+                      pos.y,
+                      m_bounding_box.x,
+                      m_bounding_box.x + m_bounding_box.w,
+                      m_bounding_box.y,
+                      m_bounding_box.y + m_bounding_box.h));
     }
 
     const auto possible_idxs = m_root.find(pos);
@@ -218,8 +222,8 @@ class Quadtree {
         return m_data[idx];
       }
     }
-    throw std::runtime_error(QT_ERROR_LOC() + ": Position {"s + std::to_string(pos.x) + ", "s +
-                             std::to_string(pos.y) + "} is not in quadtree."s);
+    throw std::runtime_error(
+        std::format("{}: Position {{{}, {}}} is not in quadtree.", QT_ERROR_LOC(), pos.x, pos.y));
   }
 
   template <template <typename> class Shape>
@@ -227,15 +231,6 @@ class Quadtree {
     using namespace std::string_literals;
     if (!m_bounding_box.intersects(shape)) {
       throw std::runtime_error(QT_ERROR_LOC() + ": Search shape does not intersect bounding_box.");
-      // throw std::runtime_error(QT_ERROR_LOC() + ": Search box {["s + std::to_string(box.x) + ",
-      // "s +
-      //                          std::to_string(box.x + box.w) + "], ["s + std::to_string(box.y) +
-      //                          ", "s + std::to_string(box.y + box.h) +
-      //                          "]} does not intersect bounding_box {["s +
-      //                          std::to_string(m_bounding_box.x) + ", "s +
-      //                          std::to_string(m_bounding_box.x + m_bounding_box.w) + "], ["s +
-      //                          std::to_string(m_bounding_box.y) + ", "s +
-      //                          std::to_string(m_bounding_box.y + m_bounding_box.h) + "]}."s);
     }
 
     const auto possible_idxs = m_root.find(shape);
