@@ -4,8 +4,24 @@
 
 #include "Quadtree.hpp"
 
-auto main() noexcept -> int {
+auto main(int argc, char** argv) -> int {
   using Float = float;
+
+  if (argc < 2) {
+    std::cerr << "Usage: " << *argv << " <n>\n";
+    std::exit(1);
+  }
+
+  const size_t n = [cstr = argv[1]] {
+    try {
+      return std::stoul(cstr);
+    } catch (const std::exception&) {
+      std::cerr << "Could not parse string `" << cstr << "` to unsigned long.\n";
+      std::exit(1);
+    }
+  }();
+
+  std::cout << "n = " << n << "\n\n\n";
 
   qtree::Box<Float> bb{.x = 0.0, .y = 0.0, .w = 100.0, .h = 150.0};
   // qtree::Quadtree<size_t, Float, 100UL> qt(bb);
@@ -15,7 +31,6 @@ auto main() noexcept -> int {
   std::uniform_real_distribution<Float> dist_x(bb.x, bb.x + bb.w);
   std::uniform_real_distribution<Float> dist_y(bb.y, bb.y + bb.h);
 
-  constexpr size_t n = 5'000'000;
   std::vector<qtree::Point<Float>> positions(n);
   std::generate(std::begin(positions), std::end(positions), [&] {
     return qtree::Point{.x = dist_x(gen), .y = dist_y(gen)};
@@ -35,12 +50,16 @@ auto main() noexcept -> int {
   // qt.print_root();
 
   try {
-    bool all_correct = true;
+    const auto t_begin = std::chrono::high_resolution_clock::now();
+    bool all_correct   = true;
     for (size_t i = 0; i < n; ++i) {
       const auto x = qt.find(positions[i]);
       all_correct  = all_correct && (x == std::to_string(i));
     }
-    std::cout << "Found all = " << std::boolalpha << all_correct << "\n\n\n";
+    const auto t_dur =
+        std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - t_begin);
+    std::cout << "Found all = " << std::boolalpha << all_correct << '\n';
+    std::cout << "Finding all took " << t_dur << "\n\n\n";
   } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
   }
@@ -109,7 +128,8 @@ auto main() noexcept -> int {
     std::cout << "Correct count = " << std::boolalpha
               << (xs.size() == static_cast<size_t>(naive_count)) << '\n';
     std::cout << "Quadtree find took " << dur_qt_find << '\n';
-    std::cout << "Naive find took " << dur_naive_find << "\n\n\n";
+    std::cout << "Naive find took " << dur_naive_find << '\n';
+    std::cout << "Speedup: " << dur_naive_find.count() / dur_qt_find.count() << "\n\n\n";
   } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
   }
@@ -142,7 +162,8 @@ auto main() noexcept -> int {
     std::cout << "Correct count = " << std::boolalpha
               << (xs.size() == static_cast<size_t>(naive_count)) << '\n';
     std::cout << "Quadtree find took " << dur_qt_find << '\n';
-    std::cout << "Naive find took " << dur_naive_find << "\n\n\n";
+    std::cout << "Naive find took " << dur_naive_find << '\n';
+    std::cout << "Speedup: " << dur_naive_find.count() / dur_qt_find.count() << "\n\n\n";
   } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
   }
