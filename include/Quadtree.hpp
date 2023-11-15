@@ -203,7 +203,6 @@ class Quadtree {
   }
 
   [[nodiscard]] constexpr auto find(const Point<Float>& pos) -> Data& {
-    using namespace std::string_literals;
     if (!m_bounding_box.contains(pos)) {
       throw std::runtime_error(
           std::format("{}: Position {{{}, {}}} is not in bounding_box {{[{}, {}], [{}, {}]}}.",
@@ -230,7 +229,7 @@ class Quadtree {
   [[nodiscard]] constexpr auto find(const Shape<Float>& shape) const -> std::vector<Data> {
     using namespace std::string_literals;
     if (!m_bounding_box.intersects(shape)) {
-      throw std::runtime_error(QT_ERROR_LOC() + ": Search shape does not intersect bounding_box.");
+      throw std::runtime_error(QT_ERROR_LOC() + ": Search shape does not intersect bounding_box."s);
     }
 
     const auto possible_idxs = m_root.find(shape);
