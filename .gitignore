@@ -4,6 +4,8 @@
 
 compile_commands.json
 
+*.dSYM
+
 main
 
 make2ccjson.py

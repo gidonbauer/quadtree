@@ -1,5 +1,4 @@
 TARGETS = ${basename ${wildcard *.cpp}}
-CXX = /opt/homebrew/opt/llvm/bin/clang++
 CXX_FLAGS = -Wall -Wextra -pedantic -Wconversion -Wshadow -march=native -std=c++20
 
 INC = -I./include
@@ -7,7 +6,7 @@ INC = -I./include
 all: CXX_FLAGS += -O3
 all: ${TARGETS}
 
-debug: CXX_FLAGS += -O0 -g
+debug: CXX_FLAGS += -O0 -g -fsanitize=address,undefined
 debug: ${TARGETS}
 
 %: %.cpp
