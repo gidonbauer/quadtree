@@ -44,8 +44,7 @@ class QuadtreeNode {
   constexpr QuadtreeNode(Box<Float> extend) noexcept
       : m_extend(std::move(extend)) {}
 
-  [[nodiscard]]
-  constexpr auto is_leaf() const noexcept -> bool {
+  [[nodiscard]] constexpr auto is_leaf() const noexcept -> bool {
     return std::holds_alternative<std::vector<size_t>>(m_content);
   }
 
