@@ -37,7 +37,6 @@ class QuadtreeNode {
 
   enum : size_t { SUBNODES, INDICES };
 
-  bool m_is_leaf                                                         = true;
   std::variant<std::vector<QuadtreeNode>, std::vector<size_t>> m_content = std::vector<size_t>{};
   Box<Float> m_extend{};
 
@@ -45,12 +44,17 @@ class QuadtreeNode {
   constexpr QuadtreeNode(Box<Float> extend) noexcept
       : m_extend(std::move(extend)) {}
 
+  [[nodiscard]]
+  constexpr auto is_leaf() const noexcept -> bool {
+    return std::holds_alternative<std::vector<size_t>>(m_content);
+  }
+
   constexpr auto insert(const Point<Float>& pos,
                         size_t idx,
                         const std::vector<Point<Float>>& all_pos) noexcept -> bool {
     assert(m_extend.contains(pos));
 
-    if (m_is_leaf) {
+    if (is_leaf()) {
       const auto idx_vec_size = std::get<INDICES>(m_content).size();
       if (idx_vec_size < MAX_ENTRIES) {
         std::get<INDICES>(m_content).push_back(idx);
@@ -64,7 +68,6 @@ class QuadtreeNode {
         const auto x_split = m_extend.x + half_w;
         const auto y_split = m_extend.y + half_h;
 
-        m_is_leaf      = false;
         m_content      = std::vector<QuadtreeNode<Float, MAX_ENTRIES>>{};
         auto& subnodes = std::get<SUBNODES>(m_content);
         subnodes.reserve(NUM_SUBNODES);
@@ -117,7 +120,7 @@ class QuadtreeNode {
   [[nodiscard]] constexpr auto find(const Point<Float>& pos) const noexcept -> std::vector<size_t> {
     assert(m_extend.contains(pos));
 
-    if (m_is_leaf) {
+    if (is_leaf()) {
       return std::get<INDICES>(m_content);
     } else {
       const auto x_split = m_extend.x + m_extend.w / static_cast<Float>(2);
@@ -131,11 +134,11 @@ class QuadtreeNode {
   }
 
   template <template <typename> class Shape>
-  [[nodiscard]] constexpr auto find(const Shape<Float>& shape) const noexcept
-      -> std::vector<size_t> {
+  [[nodiscard]] constexpr auto
+  find(const Shape<Float>& shape) const noexcept -> std::vector<size_t> {
     assert(m_extend.intersects(shape));
 
-    if (m_is_leaf) {
+    if (is_leaf()) {
       return std::get<INDICES>(m_content);
     } else {
       std::vector<size_t> idxs{};
@@ -150,7 +153,7 @@ class QuadtreeNode {
   }
 
   constexpr void print(size_t indent = 0UL) const noexcept {
-    if (m_is_leaf) {
+    if (is_leaf()) {
       std::cout << std::string(indent, ' ') << '[';
       for (auto idx : std::get<INDICES>(m_content)) {
         std::cout << idx << ", ";
